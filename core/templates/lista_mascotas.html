@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🐶 Listado de Mascotas</h2>
+    
+</div>
+
+<!-- Buscador -->
+<form method="GET" class="d-flex mb-4">
+    <input class="form-control me-2" type="search" name="q" placeholder="Buscar por nombre o chip NFC..." value="{{ request.GET.q|default:'' }}">
+    <button class="btn btn-outline-success" type="submit">Buscar</button>
+</form>
+
+<div class="row">
+    {% for mascota in mascotas %}
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title fw-bold text-primary">{{ mascota.nombre }}</h5>
+                    <span class="badge bg-secondary">{{ mascota.especie }}</span>
+                </div>
+                <h6 class="card-subtitle mb-2 text-muted">{{ mascota.raza }}</h6>
+                
+                <p class="card-text mt-3">
+                    <small class="text-muted">Propietario:</small><br>
+                    <strong>{{ mascota.propietario.nombre_completo }}</strong>
+                </p>
+                
+                <div class="d-grid mt-3">
+                    <a href="{% url 'detalle_mascota' mascota.id %}" class="btn btn-info text-white">
+                        Ver Ficha / Vacunas 🩺
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info text-center py-5">
+            <h4>🔍 No encontramos mascotas</h4>
+            <p>Intenta otra búsqueda o registra la primera mascota del sistema.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

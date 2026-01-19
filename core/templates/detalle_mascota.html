@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- Columna Izquierda: Información Principal -->
+    <div class="col-md-5 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">🐾 Ficha de Mascota</h5>
+            </div>
+            <div class="card-body">
+                <h2 class="text-center text-primary mb-3">{{ mascota.nombre }}</h2>
+                <div class="text-center mb-3">
+                    <span class="badge bg-secondary">{{ mascota.especie }}</span>
+                    <span class="badge bg-info text-dark">{{ mascota.raza }}</span>
+                </div>
+
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <strong>Chip NFC:</strong> <span>{{ mascota.codigo_nfc }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <strong>Género:</strong> <span>{{ mascota.genero }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <strong>Color:</strong> <span>{{ mascota.color }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <strong>Nacimiento:</strong> <span>{{ mascota.fecha_nacimiento }}</span>
+                    </li>
+                </ul>
+
+                <hr>
+                <h6 class="text-muted">Propietario</h6>
+                <p class="mb-1"><strong>👤 Nombre:</strong> {{ mascota.propietario.nombre_completo }}</p>
+                <p class="mb-1"><strong>📞 Teléfono:</strong> {{ mascota.propietario.telefono }}</p>
+                <p><strong>✉️ Email:</strong> {{ mascota.propietario.email }}</p>
+
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{% url 'descargar_qr' mascota.id %}" class="btn btn-dark">
+                        ⬇️ Descargar QR Completo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Configuración y Vacunas -->
+    <div class="col-md-7">
+        
+        <!-- SECCIÓN 1: Configuración NFC (SOLO visible para el dueño) -->
+        {% if es_dueno %}
+        <div class="card border-warning shadow mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">📡 Configuración NFC (Solo Dueño)</h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">Para que la tarjeta funcione, graba este enlace en ella:</p>
+                
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="urlInput" value="{{ request.build_absolute_uri }}" readonly>
+                    <button class="btn btn-outline-dark" type="button" onclick="copiarLink()">Copiar</button>
+                </div>
+
+                <!-- PASO A PASO RECUPERADO -->
+                <div class="alert alert-light border small">
+                    <strong>Pasos para grabar con el celular:</strong>
+                    <ol class="mb-0 ps-3">
+                        <li>Descarga una App NFC (Ej. "NFC Tools").</li>
+                        <li>Selecciona <b>"Escribir"</b> -> <b>"Añadir registro"</b> -> <b>"URL / Enlace"</b>.</li>
+                        <li>Pega el enlace de arriba.</li>
+                        <li>Acerca la tarjeta al celular para finalizar.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- SECCIÓN 2: Historial de Vacunas (Compacto) -->
+        <div class="card border-success shadow mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center py-2">
+                <h6 class="mb-0">📋 Historial de Vacunas</h6>
+                
+                {% if es_dueno %}
+                    <a href="{% url 'registrar_vacuna' mascota.id %}" class="btn btn-light btn-sm fw-bold text-success" style="font-size: 0.8rem;">
+                        + Agregar
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-2"> <!-- Padding reducido -->
+                {% if vacunas %}
+                    <div class="table-responsive">
+                        <!-- 'table-sm' reduce el tamaño de las filas -->
+                        <table class="table table-hover table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Enfermedad</th>
+                                    <th>Fecha</th>
+                                    <th>Próxima</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vacuna in vacunas %}
+                                <tr>
+                                    <td class="fw-bold">{{ vacuna.enfermedad }}</td>
+                                    <td>{{ vacuna.fecha_aplicacion|date:"d/m/y" }}</td>
+                                    <td>
+                                        {% if vacuna.fecha_proxima %}
+                                        <span class="badge bg-warning text-dark">
+                                            {{ vacuna.fecha_proxima|date:"d/m/y" }}
+                                        </span>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-3 text-muted small">
+                        <p class="mb-0">No hay vacunas registradas.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para copiar el enlace al portapapeles -->
+<script>
+    function copiarLink() {
+        var copyText = document.getElementById("urlInput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); // Para móviles
+        navigator.clipboard.writeText(copyText.value);
+        
+        // Feedback visual simple
+        var btn = document.querySelector('button[onclick="copiarLink()"]');
+        var originalText = btn.innerText;
+        btn.innerText = "¡Copiado!";
+        btn.classList.remove('btn-outline-dark');
+        btn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            btn.innerText = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-dark');
+        }, 2000);
+    }
+</script>
+{% endblock %}
